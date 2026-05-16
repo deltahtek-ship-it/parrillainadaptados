@@ -1,17 +1,18 @@
 {
-    "name": "Parrilla | In-Adaptados",
-    "short_name": "In-Adaptados",
-    "start_url": "./index.html",
-    "display": "standalone",
-    "background_color": "#f1f5f9",
-    "theme_color": "#2563eb",
-    "decription": "Agenda colaborativa para David Hernandez y Anibal Morales",
-    "icons": [
+  "name": "Parrilla In-Adaptados",
+  "short_name": "In-Adaptados",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#2563eb",
+  "description": "Agenda colaborativa para David y Aníbal",
+  "orientation": "portrait",
+  "icons": [
     {
-        "src": "In-Adaptados.jpg",
-        "sizes": "any",
-        "type": "image/jpg",
-        "purpose": "any maskable"
+      "src": "./In-Adaptados.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
     }
-    ]
+  ]
 }
