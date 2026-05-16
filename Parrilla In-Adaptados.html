@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parrilla In-Adaptados</title>
+  <style>
+    :root { --primary: #2563eb; --danger: #dc2626; --bg: #f8fafc; --card: #ffffff; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+    .container { max-width: 1000px; margin: 0 auto; background: var(--card); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    h1 { margin-top: 0; color: var(--primary); }
+    form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; padding: 16px; background: #f1f5f9; border-radius: 8px; }
+    input, select, textarea { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    textarea { grid-column: 1 / -1; resize: vertical; min-height: 60px; }
+    button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+    #btnAccion { background: var(--primary); color: white; }
+    #btnAccion:hover { opacity: 0.9; }
+    #btnCancelar { background: #64748b; color: white; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; font-weight: 600; }
+    .acciones { display: flex; gap: 6px; }
+    .btn-edit { background: #f59e0b; color: white; padding: 4px 8px; font-size: 12px; }
+    .btn-del { background: var(--danger); color: white; padding: 4px 8px; font-size: 12px; }
+    .empty { text-align: center; padding: 30px; color: #64748b; }
+    @media (max-width: 600px) { form { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📅 Parrilla Programática | In-Adaptados</h1>
+    
+    <form id="formulario">
+      <input type="date" id="fecha" required>
+      <input type="time" id="hora" required>
+      <input type="text" id="segmento" placeholder="Nombre del segmento" required>
+      <!-- ✅ NOMBRES ACTUALIZADOS -->
+      <select id="conductor" required>
+        <option value="">Seleccionar conductor...</option>
+        <option value="David Hernández">David Hernández</option>
+        <option value="Anibal Morales">Anibal Morales</option>
+        <option value="Ambos">Ambos</option>
+      </select>
+      <textarea id="descripcion" placeholder="Notas, invitados, pauta, etc."></textarea>
+      <input type="hidden" id="docId" value="">
+      <div style="grid-column: 1 / -1; display: flex; gap: 10px;">
+        <button type="submit" id="btnAccion">➕ Agregar</button>
+        <button type="button" id="btnCancelar" style="display:none;">❌ Cancelar</button>
+      </div>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Segmento</th>
+          <th>Conductor</th>
+          <th>Notas</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCuerpo">
+        <tr><td colspan="6" class="empty">Cargando parrilla...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    // 1. Importar Firebase (versión 10+)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // 🔑 REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyDGd-I5xmPk16XM5_sU6ezlCKwN1zThJ80",
+      authDomain: "Tparrilla-in-adaptados.firebaseapp.com",
+      projectId: "parrilla-in-adaptados",
+      storageBucket: "parrilla-in-adaptados.firebasestorage.app",
+      messagingSenderId: "1083652340986",
+      appId: "1:1083652340986:web:b99849106cdfc5c3c19d43"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const parrillaRef = collection(db, "parrillas");
+
+    const form = document.getElementById("formulario");
+    const btnAccion = document.getElementById("btnAccion");
+    const btnCancelar = document.getElementById("btnCancelar");
+    const tbody = document.getElementById("tablaCuerpo");
+
+    // 🔄 Escuchar cambios en tiempo real
+    const q = query(parrillaRef, orderBy("fecha"), orderBy("hora"));
+    onSnapshot(q, (snapshot) => {
+      tbody.innerHTML = "";
+      if (snapshot.empty) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">No hay entradas aún. ¡Agrega la primera!</td></tr>`;
+        return;
+      }
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${d.fecha}</td>
+          <td>${d.hora}</td>
+          <td>${d.segmento}</td>
+          <td>${d.conductor}</td>
+          <td>${d.descripcion || "-"}</td>
+          <td class="acciones">
+            <button class="btn-edit" data-id="${docSnap.id}">✏️ Editar</button>
+            <button class="btn-del" data-id="${docSnap.id}">🗑️ Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll(".btn-edit").forEach(btn => {
+        btn.onclick = () => cargarEdicion(btn.dataset.id);
+      });
+      document.querySelectorAll(".btn-del").forEach(btn => {
+        btn.onclick = () => eliminarEntrada(btn.dataset.id);
+      });
+    });
+
+    // ➕ Agregar o 🔄 Actualizar
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const data = {
+        fecha: document.getElementById("fecha").value,
+        hora: document.getElementById("hora").value,
+        segmento: document.getElementById("segmento").value,
+        conductor: document.getElementById("conductor").value,
+        descripcion: document.getElementById("descripcion").value
+      };
+      const id = document.getElementById("docId").value;
+
+      if (id) {
+        await updateDoc(doc(db, "parrillas", id), data);
+      } else {
+        await addDoc(parrillaRef, data);
+      }
+      limpiarFormulario();
+    };
+
+    // ✏️ Cargar datos para editar
+    async function cargarEdicion(id) {
+      onSnapshot(doc(db, "parrillas", id), (d) => {
+        const data = d.data();
+        document.getElementById("fecha").value = data.fecha;
+        document.getElementById("hora").value = data.hora;
+        document.getElementById("segmento").value = data.segmento;
+        document.getElementById("conductor").value = data.conductor;
+        document.getElementById("descripcion").value = data.descripcion || "";
+        document.getElementById("docId").value = id;
+        btnAccion.textContent = "💾 Guardar Cambios";
+        btnCancelar.style.display = "inline-block";
+      }, { immediate: true });
+    }
+
+    // 🗑️ Eliminar
+    async function eliminarEntrada(id) {
+      if (confirm("¿Eliminar esta entrada de la parrilla?")) {
+        await deleteDoc(doc(db, "parrillas", id));
+        if (document.getElementById("docId").value === id) limpiarFormulario();
+      }
+    }
+
+    // ❌ Cancelar edición
+    btnCancelar.onclick = limpiarFormulario;
+
+    function limpiarFormulario() {
+      form.reset();
+      document.getElementById("docId").value = "";
+      btnAccion.textContent = "➕ Agregar";
+      btnCancelar.style.display = "none";
+    }
+  </script>
+</body>
+</html>
