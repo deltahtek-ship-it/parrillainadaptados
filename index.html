@@ -2,39 +2,65 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parrilla In-Adaptados</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Parrilla | In-Adaptados</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
   <style>
-    :root { --primary: #2563eb; --danger: #dc2626; --bg: #f8fafc; --card: #ffffff; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
-    .container { max-width: 1000px; margin: 0 auto; background: var(--card); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-    h1 { margin-top: 0; color: var(--primary); }
-    form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; padding: 16px; background: #f1f5f9; border-radius: 8px; }
-    input, select, textarea { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-    textarea { grid-column: 1 / -1; resize: vertical; min-height: 60px; }
-    button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+    :root { --primary: #2563eb; --danger: #dc2626; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: var(--text); padding-bottom: 80px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin: 0 0 16px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    
+    /* Formulario */
+    form { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; background: #fff; }
+    textarea { min-height: 80px; resize: vertical; }
+    .btn-group { display: flex; gap: 10px; }
+    button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     #btnAccion { background: var(--primary); color: white; }
-    #btnAccion:hover { opacity: 0.9; }
-    #btnCancelar { background: #64748b; color: white; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-    th { background: #f8fafc; font-weight: 600; }
-    .acciones { display: flex; gap: 6px; }
-    .btn-edit { background: #f59e0b; color: white; padding: 4px 8px; font-size: 12px; }
-    .btn-del { background: var(--danger); color: white; padding: 4px 8px; font-size: 12px; }
-    .empty { text-align: center; padding: 30px; color: #64748b; }
-    @media (max-width: 600px) { form { grid-template-columns: 1fr; } }
+    #btnCancelar { background: #64748b; color: white; display: none; }
+    
+    /* Tabla Escritorio */
+    .desktop-table { display: none; }
+    @media (min-width: 768px) {
+      .desktop-table { display: table; width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+      .desktop-table th, .desktop-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+      .desktop-table th { background: #f1f5f9; font-weight: 600; }
+      .mobile-cards { display: none; }
+    }
+    
+    /* Tarjetas Móvil */
+    .mobile-cards { display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card-time { font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+    .card-cond { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .card-title { font-weight: 600; margin: 4px 0; }
+    .card-notes { color: #64748b; font-size: 0.9rem; margin: 8px 0; white-space: pre-wrap; }
+    .card-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .card-actions button { font-size: 0.85rem; padding: 8px 12px; }
+    .btn-edit { background: #f59e0b; color: white; }
+    .btn-del { background: var(--danger); color: white; }
+    
+    .empty { text-align: center; padding: 30px; color: #64748b; font-style: italic; }
+    
+    /* Botón Instalar */
+    #installBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; padding: 14px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(37,99,235,0.4); z-index: 100; display: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📅 Parrilla Programática | In-Adaptados</h1>
+    <h1>📅 Parrilla Programática In-Adaptados</h1>
     
     <form id="formulario">
       <input type="date" id="fecha" required>
       <input type="time" id="hora" required>
       <input type="text" id="segmento" placeholder="Nombre del segmento" required>
-      <!-- ✅ NOMBRES ACTUALIZADOS -->
       <select id="conductor" required>
         <option value="">Seleccionar conductor...</option>
         <option value="David Hernández">David Hernández</option>
@@ -43,38 +69,32 @@
       </select>
       <textarea id="descripcion" placeholder="Notas, invitados, pauta, etc."></textarea>
       <input type="hidden" id="docId" value="">
-      <div style="grid-column: 1 / -1; display: flex; gap: 10px;">
+      <div class="btn-group">
         <button type="submit" id="btnAccion">➕ Agregar</button>
-        <button type="button" id="btnCancelar" style="display:none;">❌ Cancelar</button>
+        <button type="button" id="btnCancelar">❌ Cancelar</button>
       </div>
     </form>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>Segmento</th>
-          <th>Conductor</th>
-          <th>Notas</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="tablaCuerpo">
-        <tr><td colspan="6" class="empty">Cargando parrilla...</td></tr>
-      </tbody>
+    <!-- Escritorio -->
+    <table class="desktop-table">
+      <thead><tr><th>Fecha</th><th>Hora</th><th>Segmento</th><th>Conductor</th><th>Notas</th><th>Acciones</th></tr></thead>
+      <tbody id="tbodyDesktop"></tbody>
     </table>
+
+    <!-- Móvil -->
+    <div class="mobile-cards" id="cardsMobile"></div>
+    <p class="empty" id="emptyMsg">Cargando parrilla...</p>
   </div>
 
-  <script type="module">
-    // 1. Importar Firebase (versión 10+)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <button id="installBtn">📲 Instalar App</button>
 
-    // 🔑 REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDGd-I5xmPk16XM5_sU6ezlCKwN1zThJ80",
-      authDomain: "Tparrilla-in-adaptados.firebaseapp.com",
+      authDomain: "parrilla-in-adaptados.firebaseapp.com",
       projectId: "parrilla-in-adaptados",
       storageBucket: "parrilla-in-adaptados.firebasestorage.app",
       messagingSenderId: "1083652340986",
@@ -88,42 +108,56 @@
     const form = document.getElementById("formulario");
     const btnAccion = document.getElementById("btnAccion");
     const btnCancelar = document.getElementById("btnCancelar");
-    const tbody = document.getElementById("tablaCuerpo");
+    const tbodyDesktop = document.getElementById("tbodyDesktop");
+    const cardsMobile = document.getElementById("cardsMobile");
+    const emptyMsg = document.getElementById("emptyMsg");
 
-    // 🔄 Escuchar cambios en tiempo real
     const q = query(parrillaRef, orderBy("fecha"), orderBy("hora"));
     onSnapshot(q, (snapshot) => {
-      tbody.innerHTML = "";
+      tbodyDesktop.innerHTML = "";
+      cardsMobile.innerHTML = "";
+      
       if (snapshot.empty) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty">No hay entradas aún. ¡Agrega la primera!</td></tr>`;
+        emptyMsg.style.display = "block";
+        emptyMsg.textContent = "No hay entradas aún. ¡Agrega la primera!";
         return;
       }
+      emptyMsg.style.display = "none";
+
       snapshot.forEach(docSnap => {
         const d = docSnap.data();
+        const id = docSnap.id;
+        
+        // Desktop
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${d.fecha}</td>
-          <td>${d.hora}</td>
-          <td>${d.segmento}</td>
-          <td>${d.conductor}</td>
-          <td>${d.descripcion || "-"}</td>
-          <td class="acciones">
-            <button class="btn-edit" data-id="${docSnap.id}">✏️ Editar</button>
-            <button class="btn-del" data-id="${docSnap.id}">🗑️ Eliminar</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+          <td>${d.fecha}</td><td>${d.hora}</td><td>${d.segmento}</td>
+          <td>${d.conductor}</td><td>${d.descripcion || "-"}</td>
+          <td>
+            <button class="btn-edit" onclick="cargarEdicion('${id}')">✏️</button>
+            <button class="btn-del" onclick="eliminarEntrada('${id}')">🗑️</button>
+          </td>`;
+        tbodyDesktop.appendChild(tr);
 
-      document.querySelectorAll(".btn-edit").forEach(btn => {
-        btn.onclick = () => cargarEdicion(btn.dataset.id);
-      });
-      document.querySelectorAll(".btn-del").forEach(btn => {
-        btn.onclick = () => eliminarEntrada(btn.dataset.id);
+        // Mobile
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-time">🕒 ${d.hora}</span>
+            <span class="card-cond">${d.conductor}</span>
+          </div>
+          <div class="card-title">${d.segmento}</div>
+          <div style="font-size:0.8rem;color:#94a3b8">📅 ${d.fecha}</div>
+          ${d.descripcion ? `<div class="card-notes">${d.descripcion}</div>` : ""}
+          <div class="card-actions">
+            <button class="btn-edit" onclick="cargarEdicion('${id}')">✏️ Editar</button>
+            <button class="btn-del" onclick="eliminarEntrada('${id}')">🗑️ Eliminar</button>
+          </div>`;
+        cardsMobile.appendChild(card);
       });
     });
 
-    // ➕ Agregar o 🔄 Actualizar
     form.onsubmit = async (e) => {
       e.preventDefault();
       const data = {
@@ -134,46 +168,62 @@
         descripcion: document.getElementById("descripcion").value
       };
       const id = document.getElementById("docId").value;
-
-      if (id) {
-        await updateDoc(doc(db, "parrillas", id), data);
-      } else {
-        await addDoc(parrillaRef, data);
-      }
+      if (id) await updateDoc(doc(db, "parrillas", id), data);
+      else await addDoc(parrillaRef, data);
       limpiarFormulario();
     };
 
-    // ✏️ Cargar datos para editar
-    async function cargarEdicion(id) {
-      onSnapshot(doc(db, "parrillas", id), (d) => {
-        const data = d.data();
-        document.getElementById("fecha").value = data.fecha;
-        document.getElementById("hora").value = data.hora;
-        document.getElementById("segmento").value = data.segmento;
-        document.getElementById("conductor").value = data.conductor;
-        document.getElementById("descripcion").value = data.descripcion || "";
+    window.cargarEdicion = async (id) => {
+      const snap = await getDoc(doc(db, "parrillas", id));
+      if (snap.exists()) {
+        const d = snap.data();
+        document.getElementById("fecha").value = d.fecha;
+        document.getElementById("hora").value = d.hora;
+        document.getElementById("segmento").value = d.segmento;
+        document.getElementById("conductor").value = d.conductor;
+        document.getElementById("descripcion").value = d.descripcion || "";
         document.getElementById("docId").value = id;
-        btnAccion.textContent = "💾 Guardar Cambios";
-        btnCancelar.style.display = "inline-block";
-      }, { immediate: true });
-    }
+        btnAccion.textContent = "💾 Guardar";
+        btnCancelar.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
 
-    // 🗑️ Eliminar
-    async function eliminarEntrada(id) {
-      if (confirm("¿Eliminar esta entrada de la parrilla?")) {
+    window.eliminarEntrada = async (id) => {
+      if (confirm("¿Eliminar esta entrada?")) {
         await deleteDoc(doc(db, "parrillas", id));
         if (document.getElementById("docId").value === id) limpiarFormulario();
       }
-    }
+    };
 
-    // ❌ Cancelar edición
     btnCancelar.onclick = limpiarFormulario;
-
     function limpiarFormulario() {
       form.reset();
       document.getElementById("docId").value = "";
       btnAccion.textContent = "➕ Agregar";
       btnCancelar.style.display = "none";
+    }
+
+    // 🔧 PWA Install Prompt
+    let deferredPrompt;
+    const installBtn = document.getElementById("installBtn");
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = "block";
+    });
+    installBtn.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") installBtn.style.display = "none";
+        deferredPrompt = null;
+      }
+    });
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
     }
   </script>
 </body>
