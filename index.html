@@ -4,94 +4,126 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#2563eb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Parrilla | In-Adaptados</title>
   <link rel="manifest" href="/manifest.json">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
   <style>
-    :root { --primary: #2563eb; --danger: #dc2626; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+    :root { --primary: #2563eb; --david: #3b82f6; --anibal: #f97316; --bg: #f1f5f9; --card: #ffffff; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: var(--text); padding-bottom: 80px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { font-size: 1.5rem; margin: 0 0 16px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #1e293b; height: 100vh; display: flex; flex-direction: column; }
     
-    /* Formulario */
-    form { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; background: #fff; }
-    textarea { min-height: 80px; resize: vertical; }
-    .btn-group { display: flex; gap: 10px; }
-    button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-    #btnAccion { background: var(--primary); color: white; }
-    #btnCancelar { background: #64748b; color: white; display: none; }
+    /* Header Fijo */
+    header { background: white; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 10; position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 1.2rem; color: var(--primary); }
+    .status { font-size: 0.8rem; color: #10b981; display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; }
+
+    /* Lista Scrollable */
+    #listaContainer { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
     
-    /* Tabla Escritorio */
-    .desktop-table { display: none; }
-    @media (min-width: 768px) {
-      .desktop-table { display: table; width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-      .desktop-table th, .desktop-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-      .desktop-table th { background: #f1f5f9; font-weight: 600; }
-      .mobile-cards { display: none; }
-    }
+    /* Tarjetas de Agenda */
+    .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border-left: 5px solid #ccc; transition: transform 0.2s; }
+    .card:active { transform: scale(0.98); }
     
-    /* Tarjetas Móvil */
-    .mobile-cards { display: flex; flex-direction: column; gap: 12px; }
-    .card { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .card-time { font-weight: 700; color: var(--primary); font-size: 1.1rem; }
-    .card-cond { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-    .card-title { font-weight: 600; margin: 4px 0; }
-    .card-notes { color: #64748b; font-size: 0.9rem; margin: 8px 0; white-space: pre-wrap; }
-    .card-actions { display: flex; gap: 8px; margin-top: 12px; }
-    .card-actions button { font-size: 0.85rem; padding: 8px 12px; }
-    .btn-edit { background: #f59e0b; color: white; }
-    .btn-del { background: var(--danger); color: white; }
+    /* Colores por Conductor */
+    .card[data-conductor="David Hernández"] { border-left-color: var(--david); }
+    .card[data-conductor="Anibal Morales"] { border-left-color: var(--anibal); }
+    .card[data-conductor="Ambos"] { border-left-color: #8b5cf6; }
+
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .time-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.9rem; color: #475569; }
+    .conductor-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     
-    .empty { text-align: center; padding: 30px; color: #64748b; font-style: italic; }
+    .seg-title { font-weight: 600; font-size: 1.1rem; margin: 5px 0; line-height: 1.3; }
+    .seg-notes { color: #64748b; font-size: 0.9rem; white-space: pre-wrap; margin-top: 5px; }
     
-    /* Botón Instalar */
-    #installBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; padding: 14px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(37,99,235,0.4); z-index: 100; display: none; }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; opacity: 0.6; }
+    .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
+
+    /* Botón Flotante (FAB) */
+    .fab { position: fixed; bottom: 25px; right: 25px; background: var(--primary); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 15px rgba(37,99,235,0.4); cursor: pointer; z-index: 20; border: none; }
+    .fab:active { transform: scale(0.9); }
+
+    /* Modal Overlay */
+    #modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 30; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); }
+    #modal.active { display: flex; }
+    
+    /* Modal Content */
+    .modal-content { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 25px; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; color: #64748b; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; background: #f8fafc; }
+    textarea { min-height: 80px; resize: none; }
+    
+    .btn-block { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    .btn-save { background: var(--primary); color: white; }
+    .btn-close { background: transparent; color: #64748b; margin-top: 5px; }
+
+    .empty-state { text-align: center; margin-top: 50px; color: #94a3b8; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📅 Parrilla Programática In-Adaptados</h1>
-    
-    <form id="formulario">
-      <input type="date" id="fecha" required>
-      <input type="time" id="hora" required>
-      <input type="text" id="segmento" placeholder="Nombre del segmento" required>
-      <select id="conductor" required>
-        <option value="">Seleccionar conductor...</option>
-        <option value="David Hernández">David Hernández</option>
-        <option value="Anibal Morales">Anibal Morales</option>
-        <option value="Ambos">Ambos</option>
-      </select>
-      <textarea id="descripcion" placeholder="Notas, invitados, pauta, etc."></textarea>
-      <input type="hidden" id="docId" value="">
-      <div class="btn-group">
-        <button type="submit" id="btnAccion">➕ Agregar</button>
-        <button type="button" id="btnCancelar">❌ Cancelar</button>
-      </div>
-    </form>
 
-    <!-- Escritorio -->
-    <table class="desktop-table">
-      <thead><tr><th>Fecha</th><th>Hora</th><th>Segmento</th><th>Conductor</th><th>Notas</th><th>Acciones</th></tr></thead>
-      <tbody id="tbodyDesktop"></tbody>
-    </table>
+  <header>
+    <h1>📅 Parrilla In-Adaptados</h1>
+    <div class="status"><span class="dot"></span> En vivo</div>
+  </header>
 
-    <!-- Móvil -->
-    <div class="mobile-cards" id="cardsMobile"></div>
-    <p class="empty" id="emptyMsg">Cargando parrilla...</p>
+  <div id="listaContainer">
+    <!-- Aquí se inyectan las tarjetas -->
+    <div class="empty-state">Cargando parrilla...</div>
   </div>
 
-  <button id="installBtn">📲 Instalar App</button>
+  <!-- Botón Flotante -->
+  <button class="fab" onclick="abrirModal()">+</button>
+
+  <!-- Modal Formulario -->
+  <div id="modal">
+    <div class="modal-content">
+      <h2 style="margin-top:0">Nuevo Segmento</h2>
+      <form id="formulario">
+        <div class="form-group">
+          <label>Hora y Fecha</label>
+          <div style="display:flex; gap:10px;">
+            <input type="time" id="hora" required>
+            <input type="date" id="fecha" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Conductor</label>
+          <select id="conductor" required>
+            <option value="">Seleccionar...</option>
+            <option value="David Hernández">David Hernández</option>
+            <option value="Anibal Morales">Anibal Morales</option>
+            <option value="Ambos">Ambos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Segmento / Tema</label>
+          <input type="text" id="segmento" placeholder="Ej: Entrevista con Alcalde" required>
+        </div>
+
+        <div class="form-group">
+          <label>Notas / Pauta</label>
+          <textarea id="descripcion" placeholder="Detalles, invitados, cuñas..."></textarea>
+        </div>
+
+        <input type="hidden" id="docId">
+        
+        <button type="submit" class="btn-block btn-save" id="btnSave">💾 Guardar en Parrilla</button>
+        <button type="button" class="btn-block btn-close" onclick="cerrarModal()">Cancelar</button>
+      </form>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // ⚠️ PEGA AQUÍ TUS DATOS DE FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyDGd-I5xmPk16XM5_sU6ezlCKwN1zThJ80",
       authDomain: "parrilla-in-adaptados.firebaseapp.com",
@@ -103,63 +135,67 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const parrillaRef = collection(db, "parrillas");
+    const q = query(collection(db, "parrillas"), orderBy("fecha"), orderBy("hora"));
 
+    const container = document.getElementById("listaContainer");
+    const modal = document.getElementById("modal");
     const form = document.getElementById("formulario");
-    const btnAccion = document.getElementById("btnAccion");
-    const btnCancelar = document.getElementById("btnCancelar");
-    const tbodyDesktop = document.getElementById("tbodyDesktop");
-    const cardsMobile = document.getElementById("cardsMobile");
-    const emptyMsg = document.getElementById("emptyMsg");
 
-    const q = query(parrillaRef, orderBy("fecha"), orderBy("hora"));
+    // 🔄 Escuchar cambios en tiempo real
     onSnapshot(q, (snapshot) => {
-      tbodyDesktop.innerHTML = "";
-      cardsMobile.innerHTML = "";
-      
+      container.innerHTML = "";
       if (snapshot.empty) {
-        emptyMsg.style.display = "block";
-        emptyMsg.textContent = "No hay entradas aún. ¡Agrega la primera!";
+        container.innerHTML = `<div class="empty-state">📭 La parrilla está vacía.<br>Toca el botón + para empezar.</div>`;
         return;
       }
-      emptyMsg.style.display = "none";
-
+      
       snapshot.forEach(docSnap => {
         const d = docSnap.data();
-        const id = docSnap.id;
+        const div = document.createElement("div");
+        div.className = "card";
+        div.setAttribute("data-conductor", d.conductor); // Para el color del borde
         
-        // Desktop
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${d.fecha}</td><td>${d.hora}</td><td>${d.segmento}</td>
-          <td>${d.conductor}</td><td>${d.descripcion || "-"}</td>
-          <td>
-            <button class="btn-edit" onclick="cargarEdicion('${id}')">✏️</button>
-            <button class="btn-del" onclick="eliminarEntrada('${id}')">🗑️</button>
-          </td>`;
-        tbodyDesktop.appendChild(tr);
-
-        // Mobile
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
+        div.innerHTML = `
           <div class="card-header">
-            <span class="card-time">🕒 ${d.hora}</span>
-            <span class="card-cond">${d.conductor}</span>
+            <span class="time-badge">🕒 ${d.hora}</span>
+            <span class="conductor-badge" style="color:${getColor(d.conductor)}">${d.conductor}</span>
           </div>
-          <div class="card-title">${d.segmento}</div>
-          <div style="font-size:0.8rem;color:#94a3b8">📅 ${d.fecha}</div>
-          ${d.descripcion ? `<div class="card-notes">${d.descripcion}</div>` : ""}
-          <div class="card-actions">
-            <button class="btn-edit" onclick="cargarEdicion('${id}')">✏️ Editar</button>
-            <button class="btn-del" onclick="eliminarEntrada('${id}')">🗑️ Eliminar</button>
-          </div>`;
-        cardsMobile.appendChild(card);
+          <div class="seg-title">${d.segmento}</div>
+          ${d.descripcion ? `<div class="seg-notes">${d.descripcion}</div>` : ""}
+          <div class="actions">
+            <button class="btn-icon" onclick="editar('${docSnap.id}')">✏️</button>
+            <button class="btn-icon" onclick="eliminar('${docSnap.id}')">🗑️</button>
+          </div>
+        `;
+        container.appendChild(div);
       });
     });
 
+    function getColor(conductor) {
+      if(conductor.includes("David")) return "#3b82f6";
+      if(conductor.includes("Anibal")) return "#f97316";
+      return "#8b5cf6";
+    }
+
+    // ➕ Lógica del Modal
+    window.abrirModal = () => {
+      form.reset();
+      document.getElementById("docId").value = "";
+      document.getElementById("btnSave").textContent = "💾 Guardar en Parrilla";
+      
+      // Poner fecha de hoy por defecto
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById("fecha").value = hoy;
+      
+      modal.classList.add("active");
+    };
+
+    window.cerrarModal = () => modal.classList.remove("active");
+
+    // 💾 Guardar
     form.onsubmit = async (e) => {
       e.preventDefault();
+      const id = document.getElementById("docId").value;
       const data = {
         fecha: document.getElementById("fecha").value,
         hora: document.getElementById("hora").value,
@@ -167,15 +203,19 @@
         conductor: document.getElementById("conductor").value,
         descripcion: document.getElementById("descripcion").value
       };
-      const id = document.getElementById("docId").value;
+
       if (id) await updateDoc(doc(db, "parrillas", id), data);
-      else await addDoc(parrillaRef, data);
-      limpiarFormulario();
+      else await addDoc(collection(db, "parrillas"), data);
+      
+      cerrarModal();
     };
 
-    window.cargarEdicion = async (id) => {
-      const snap = await getDoc(doc(db, "parrillas", id));
-      if (snap.exists()) {
+    // ✏️ Editar
+    window.editar = async (id) => {
+      // Nota: En una app real optimizada, ya tendríamos los datos en memoria.
+      // Aquí hacemos un fetch rápido del doc específico.
+      const snap = await getDocFromId(id); 
+      if(snap) {
         const d = snap.data();
         document.getElementById("fecha").value = d.fecha;
         document.getElementById("hora").value = d.hora;
@@ -183,48 +223,28 @@
         document.getElementById("conductor").value = d.conductor;
         document.getElementById("descripcion").value = d.descripcion || "";
         document.getElementById("docId").value = id;
-        btnAccion.textContent = "💾 Guardar";
-        btnCancelar.style.display = "block";
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        document.getElementById("btnSave").textContent = "🔄 Actualizar Cambios";
+        modal.classList.add("active");
       }
     };
 
-    window.eliminarEntrada = async (id) => {
-      if (confirm("¿Eliminar esta entrada?")) {
-        await deleteDoc(doc(db, "parrillas", id));
-        if (document.getElementById("docId").value === id) limpiarFormulario();
-      }
-    };
-
-    btnCancelar.onclick = limpiarFormulario;
-    function limpiarFormulario() {
-      form.reset();
-      document.getElementById("docId").value = "";
-      btnAccion.textContent = "➕ Agregar";
-      btnCancelar.style.display = "none";
+    // Función auxiliar para obtener un doc (importarla arriba si prefieres)
+    import { getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    async function getDocFromId(id) {
+      const docRef = doc(db, "parrillas", id);
+      const snap = await getDoc(docRef);
+      return snap.exists() ? snap : null;
     }
 
-    // 🔧 PWA Install Prompt
-    let deferredPrompt;
-    const installBtn = document.getElementById("installBtn");
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installBtn.style.display = "block";
-    });
-    installBtn.addEventListener("click", async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === "accepted") installBtn.style.display = "none";
-        deferredPrompt = null;
+    // 🗑️ Eliminar
+    window.eliminar = async (id) => {
+      if(confirm("¿Borrar este segmento?")) {
+        await deleteDoc(doc(db, "parrillas", id));
       }
-    });
+    };
   </script>
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
-    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
   </script>
 </body>
 </html>
