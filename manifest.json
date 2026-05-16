@@ -1,22 +1,16 @@
 {
     "name": "Parrilla | In-Adaptados",
-    "short_name": "Parrilla Programática In-Adaptados",
+    "short_name": "In-Adaptados",
     "start_url": "./index.html",
     "display": "standalone",
-    "background_color": "#f8fafc",
+    "background_color": "#f1f5f9",
     "theme_color": "#2563eb",
-    "decription": "Agenda colaborativa para conductores",
+    "decription": "Agenda colaborativa para David Hernandez y Anibal Morales",
     "icons": [
     {
-        "src": "https://cdn-icons-png.flaticon.com/512/3063/3063164.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable"
-    },
-    {
-        "src": "https://cdn-icons-png.flaticon.com/512/3063/3063164.png",
-        "sizes": "512x512",
-        "type": "image/png",
+        "src": "In-Adaptados.jpg",
+        "sizes": "any",
+        "type": "image/jpg",
         "purpose": "any maskable"
     }
     ]
