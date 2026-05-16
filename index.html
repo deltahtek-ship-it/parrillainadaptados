@@ -16,6 +16,7 @@
     .status { font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px; }
     .dot { width: 8px; height: 8px; background: #cbd5e1; border-radius: 50%; display: inline-block; transition: 0.3s; }
     .dot.online { background: #10b981; box-shadow: 0 0 5px #10b981; }
+    .dot.error { background: #ef4444; }
 
     #listaContainer { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
     
@@ -53,7 +54,9 @@
     .btn-close { background: transparent; color: #64748b; margin-top: 5px; }
 
     .empty-state { text-align: center; margin-top: 50px; color: #94a3b8; }
-    .error-msg { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; margin: 10px; text-align: center; display: none; }
+    .error-msg { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; margin: 10px; text-align: center; display: none; font-size: 0.9rem; }
+    
+    .refresh-btn { position: fixed; top: 70px; right: 15px; background: white; border: 1px solid #cbd5e1; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; z-index: 15; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -63,6 +66,7 @@
     <div class="status"><span class="dot" id="statusDot"></span> <span id="statusText">Conectando...</span></div>
   </header>
 
+  <button class="refresh-btn" onclick="forzarRecarga()" title="Recargar datos">🔄</button>
   <div id="errorMsg" class="error-msg"></div>
   <div id="listaContainer">
     <div class="empty-state">Cargando parrilla...</div>
@@ -112,9 +116,9 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ⚠️ PEGA AQUÍ TUS DATOS DE FIREBASE
+    // ✅ Tus credenciales (ya integradas)
     const firebaseConfig = {
       apiKey: "AIzaSyDGd-I5xmPk16XM5_sU6ezlCKwN1zThJ80",
       authDomain: "parrilla-in-adaptados.firebaseapp.com",
@@ -125,84 +129,180 @@
     };
 
     let db;
+    let unsubscribe = null; // Para poder cancelar la suscripción si es necesario
+    
     try {
       const app = initializeApp(firebaseConfig);
       db = getFirestore(app);
+      
+      // ✅ Activar persistencia offline (para que funcione sin internet)
+      enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.log('Persistencia: Múltiples pestañas abiertas');
+        } else if (err.code === 'unimplemented') {
+          console.log('Persistencia: No soportada en este navegador');
+        }
+      });
+      
       document.getElementById("statusDot").classList.add("online");
       document.getElementById("statusText").textContent = "En línea";
+      console.log("✅ Firebase inicializado correctamente");
     } catch (e) {
-      mostrarError("Error conectando a Firebase. Revisa tus claves.");
+      console.error("❌ Error Firebase:", e);
+      mostrarError("Error conectando a Firebase.");
     }
 
     const container = document.getElementById("listaContainer");
     const modal = document.getElementById("modal");
     const form = document.getElementById("formulario");
     const errorDiv = document.getElementById("errorMsg");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
 
     function mostrarError(msg) {
       errorDiv.textContent = msg;
       errorDiv.style.display = "block";
-      document.getElementById("statusText").textContent = "Error";
+      statusText.textContent = "Error";
+      statusDot.classList.remove("online");
+      statusDot.classList.add("error");
+      console.error("🚨 Error mostrado:", msg);
     }
 
-    if (db) {
-      const q = query(collection(db, "parrillas"), orderBy("fecha"), orderBy("hora"));
+    function ocultarError() {
+      errorDiv.style.display = "none";
+      statusDot.classList.add("online");
+      statusDot.classList.remove("error");
+      statusText.textContent = "En línea";
+    }
+
+    // 🔄 Función principal para cargar datos
+    function cargarParrilla() {
+      if (!db) {
+        mostrarError("Firebase no está inicializado.");
+        return;
+      }
+
+      // Cancelar suscripción anterior si existe
+      if (unsubscribe) unsubscribe();
+
+      // Query con ordenamiento seguro
+      const q = query(collection(db, "parrillas"), orderBy("fecha", "asc"), orderBy("hora", "asc"));
       
-      onSnapshot(q, (snapshot) => {
-        container.innerHTML = "";
-        errorDiv.style.display = "none";
-        
-        if (snapshot.empty) {
-          container.innerHTML = `<div class="empty-state">📭 La parrilla está vacía.<br>Toca + para agregar.</div>`;
-          return;
+      console.log("📡 Suscribiendo a cambios en tiempo real...");
+      
+      unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          console.log(`✅ Datos recibidos: ${snapshot.size} documentos`);
+          renderizarLista(snapshot);
+          ocultarError();
+        }, 
+        (error) => {
+          console.error("❌ Error en onSnapshot:", error.code, error.message);
+          
+          if (error.code === 'permission-denied') {
+            mostrarError("⛔ Permiso denegado. Ve a Firebase Console > Firestore > Reglas y pega:\n\nrules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}");
+          } else if (error.code === 'failed-precondition') {
+            mostrarError("⚠️ El índice de la consulta no está creado. Revisa la consola de Firebase.");
+          } else {
+            mostrarError("⚠️ Error de conexión: " + error.message);
+          }
         }
-        
-        snapshot.forEach(docSnap => {
+      );
+    }
+
+    function renderizarLista(snapshot) {
+      container.innerHTML = "";
+      
+      if (snapshot.empty) {
+        container.innerHTML = `<div class="empty-state">📭 La parrilla está vacía.<br><small>Toca + para agregar el primer segmento.</small></div>`;
+        return;
+      }
+      
+      let itemsRenderizados = 0;
+      snapshot.forEach(docSnap => {
+        try {
           const d = docSnap.data();
+          // Validar campos obligatorios
+          if (!d.fecha || !d.hora) {
+            console.warn("⚠️ Documento sin fecha/hora:", docSnap.id);
+            return; // Saltar este documento
+          }
+          
           const div = document.createElement("div");
           div.className = "card";
-          div.setAttribute("data-conductor", d.conductor);
+          div.setAttribute("data-conductor", d.conductor || "Desconocido");
+          
+          // Formatear fecha para mostrar
+          const fechaLegible = new Date(d.fecha + 'T00:00:00').toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' });
           
           div.innerHTML = `
             <div class="card-header">
-              <span class="time-badge">🕒 ${d.hora}</span>
-              <span class="conductor-badge" style="color:${getColor(d.conductor)}">${d.conductor}</span>
+              <span class="time-badge">🕒 ${d.hora} • ${fechaLegible}</span>
+              <span class="conductor-badge" style="color:${getColor(d.conductor)}">${d.conductor || 'Sin asignar'}</span>
             </div>
-            <div class="seg-title">${d.segmento}</div>
-            ${d.descripcion ? `<div class="seg-notes">${d.descripcion}</div>` : ""}
+            <div class="seg-title">${d.segmento || 'Sin título'}</div>
+            ${d.descripcion ? `<div class="seg-notes">📝 ${d.descripcion}</div>` : ""}
             <div class="actions">
               <button class="btn-icon" onclick="editar('${docSnap.id}')">✏️</button>
               <button class="btn-icon" onclick="eliminar('${docSnap.id}')">🗑️</button>
             </div>
           `;
           container.appendChild(div);
-        });
-      }, (error) => {
-        console.error(error);
-        mostrarError("Error de permisos o conexión. Revisa las Reglas de Firebase.");
+          itemsRenderizados++;
+        } catch (err) {
+          console.error("Error renderizando documento:", docSnap.id, err);
+        }
       });
+      
+      console.log(`🎨 Renderizados ${itemsRenderizados} elementos`);
     }
 
     function getColor(conductor) {
-      if(conductor && conductor.includes("David")) return "#3b82f6";
-      if(conductor && conductor.includes("Anibal")) return "#f97316";
+      if (!conductor) return "#94a3b8";
+      if (conductor.includes("David")) return "#3b82f6";
+      if (conductor.includes("Anibal")) return "#f97316";
       return "#8b5cf6";
     }
 
+    // 🌐 Función global para recargar manualmente
+    window.forzarRecarga = () => {
+      console.log("🔄 Recarga manual solicitada");
+      statusText.textContent = "Actualizando...";
+      statusDot.classList.remove("online");
+      cargarParrilla();
+    };
+
+    // 🟢 Modal functions
     window.abrirModal = () => {
       form.reset();
       document.getElementById("docId").value = "";
       document.getElementById("btnSave").textContent = "💾 Guardar en Parrilla";
-      const hoy = new Date().toISOString().split('T')[0];
-      document.getElementById("fecha").value = hoy;
+      document.getElementById("btnSave").disabled = false;
+      
+      // Pre-llenar con fecha/hora actual
+      const ahora = new Date();
+      document.getElementById("fecha").value = ahora.toISOString().split('T')[0];
+      document.getElementById("hora").value = ahora.toTimeString().slice(0,5);
+      
       modal.classList.add("active");
     };
 
-    window.cerrarModal = () => modal.classList.remove("active");
+    window.cerrarModal = () => {
+      modal.classList.remove("active");
+      form.reset();
+      document.getElementById("docId").value = "";
+    };
 
+    // 💾 Guardar o actualizar
     form.onsubmit = async (e) => {
       e.preventDefault();
+      if (!db) {
+        alert("Error: Firebase no está conectado");
+        return;
+      }
+      
       const btnSave = document.getElementById("btnSave");
+      const textoOriginal = btnSave.textContent;
       btnSave.textContent = "Guardando...";
       btnSave.disabled = true;
 
@@ -211,28 +311,41 @@
         const data = {
           fecha: document.getElementById("fecha").value,
           hora: document.getElementById("hora").value,
-          segmento: document.getElementById("segmento").value,
+          segmento: document.getElementById("segmento").value.trim(),
           conductor: document.getElementById("conductor").value,
-          descripcion: document.getElementById("descripcion").value
+          descripcion: document.getElementById("descripcion").value.trim(),
+          actualizado: new Date().toISOString() // Para debugging
         };
 
-        if (id) await updateDoc(doc(db, "parrillas", id), data);
-        else await addDoc(collection(db, "parrillas"), data);
+        if (id) {
+          console.log("🔄 Actualizando documento:", id);
+          await updateDoc(doc(db, "parrillas", id), data);
+        } else {
+          console.log("➕ Creando nuevo documento");
+          await addDoc(collection(db, "parrillas"), data);
+        }
         
+        console.log("✅ Operación exitosa");
         cerrarModal();
+        
       } catch (err) {
-        alert("Error al guardar: " + err.message);
+        console.error("❌ Error al guardar:", err);
+        alert("Error al guardar: " + (err.message || err));
       } finally {
-        btnSave.textContent = "💾 Guardar en Parrilla";
+        btnSave.textContent = textoOriginal;
         btnSave.disabled = false;
       }
     };
 
+    // ✏️ Editar existente
     window.editar = async (id) => {
+      if (!db) return;
       try {
+        console.log("✏️ Editando:", id);
         const docRef = doc(db, "parrillas", id);
         const snap = await getDoc(docRef);
-        if(snap.exists()) {
+        
+        if (snap.exists()) {
           const d = snap.data();
           document.getElementById("fecha").value = d.fecha;
           document.getElementById("hora").value = d.hora;
@@ -242,24 +355,55 @@
           document.getElementById("docId").value = id;
           document.getElementById("btnSave").textContent = "🔄 Actualizar Cambios";
           modal.classList.add("active");
+        } else {
+          alert("Este segmento ya no existe.");
         }
       } catch (err) {
-        alert("Error al editar: " + err.message);
+        console.error("Error al editar:", err);
+        alert("Error: " + err.message);
       }
     };
 
+    // 🗑️ Eliminar
     window.eliminar = async (id) => {
-      if(confirm("¿Borrar este segmento?")) {
+      if (!db) return;
+      if (confirm("¿Eliminar este segmento de la parrilla?")) {
         try {
+          console.log("🗑️ Eliminando:", id);
           await deleteDoc(doc(db, "parrillas", id));
         } catch (err) {
-          alert("Error al borrar: " + err.message);
+          console.error("Error al eliminar:", err);
+          alert("Error: " + err.message);
         }
       }
     };
+
+    // 🚀 Iniciar la app
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("🎬 App cargada, iniciando conexión...");
+      if (db) {
+        cargarParrilla();
+      }
+    });
+
+    // 📱 Soporte para cuando vuelve a tener foco la pestaña
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && db) {
+        console.log("👁️ La app volvió a estar visible, verificando conexión...");
+        cargarParrilla();
+      }
+    });
   </script>
+  
   <script>
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+    // Service Worker para PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js")
+          .then(reg => console.log("✅ SW registrado:", reg.scope))
+          .catch(err => console.warn("⚠️ SW falló:", err));
+      });
+    }
   </script>
 </body>
 </html>
